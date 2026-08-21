@@ -1,0 +1,27 @@
+{
+  "name": "agentx-ray-workspace",
+  "version": "1.0.0",
+  "description": "AgentX-Ray: AI Agent Evaluation and Reliability Engine",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "npm run start --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "seed": "node backend/seed.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "ai-agent",
+    "evaluation",
+    "reliability",
+    "red-teaming",
+    "adversarial-testing",
+    "execution-trace",
+    "autopsy"
+  ],
+  "author": "AgentX-Ray Team",
+  "license": "MIT"
+}
