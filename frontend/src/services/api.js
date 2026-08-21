@@ -1,16 +1,26 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+// Resolve base URL from Vite environment variable with fallback to local proxy / localhost
+const rawBase = import.meta.env.VITE_API_URL || '';
+let API_BASE = '/api';
+
+if (rawBase) {
+  const trimmed = rawBase.replace(/\/+$/, '');
+  API_BASE = trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
 
 const client = axios.create({
   baseURL: API_BASE,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
 export const api = {
+  // Base configuration info
+  getBaseURL: () => API_BASE,
+
   // Health & System
   getHealth: async () => {
     try {
