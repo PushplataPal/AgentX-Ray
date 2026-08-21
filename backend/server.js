@@ -2,23 +2,20 @@ require('dotenv').config();
 
 const app = require('./app');
 
-const PORT = process.env.PORT || 5000;
+// Ensure PORT is evaluated as a number and never as a literal string
+const PORT = Number(process.env.PORT) || 5000;
 const HOST = '0.0.0.0';
 
-console.log(`[AgentX-Ray] Starting server...`);
-console.log(`[AgentX-Ray] PORT = ${PORT}`);
-console.log(`[AgentX-Ray] HOST = ${HOST}`);
-
 const server = app.listen(PORT, HOST, () => {
-  console.log(`🚀 AgentX-Ray server is listening on ${HOST}:${PORT}`);
-  console.log(`✅ DEMO MODE = ${process.env.DEMO_MODE !== 'false'}`);
+  console.log(`[AgentX-Ray] Server listening on ${HOST}:${PORT}`);
+  console.log(`[AgentX-Ray] DEMO MODE = ${process.env.DEMO_MODE !== 'false'}`);
 });
 
 server.on('error', (err) => {
   console.error('[Server Error]', err);
 });
 
-// MongoDB must NEVER block server startup.
+// Non-blocking database connection attempt (MongoDB failure will NOT prevent the server from running in DEMO MODE)
 try {
   const { connectDB } = require('./config/db');
 
