@@ -11,8 +11,10 @@ exports.getHealth = async (req, res) => {
     const aiStatus = aiService.getStatus();
 
     res.json({
+      status: 'ok',
+      mode: process.env.DEMO_MODE !== 'false' ? 'DEMO' : 'LIVE',
+      service: 'AgentX-Ray Backend',
       success: true,
-      status: 'UP',
       timestamp: new Date().toISOString(),
       platform: 'AgentX-Ray Reliability Engine v1.0.0',
       database: dbStatus,
@@ -24,7 +26,7 @@ exports.getHealth = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ status: 'error', success: false, error: err.message });
   }
 };
 

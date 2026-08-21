@@ -32,6 +32,11 @@ app.use('/api/health', healthRoutes);
 app.use('/api/reliability', reliabilityRoutes);
 app.use('/api', analysisRoutes);
 
+// Health check alias
+app.get('/health', (req, res) => {
+  res.redirect('/api/health');
+});
+
 // Root entrypoint info
 app.get('/', (req, res) => {
   res.json({
