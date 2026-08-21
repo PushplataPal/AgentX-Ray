@@ -350,6 +350,3 @@ $$\text{Reliability} = 0.25 \times \text{Task Accuracy} + 0.25 \times \text{Tool
 
 ---
 
-## 👥 21. Hackathon Team & Acknowledgements
-Developed for **OOSC 4.0 Hackathon — Problem Statement 4: AI Agent Evaluation and Reliability Engine**.
-Designed and built for high-assurance autonomous AI agent deployments.
