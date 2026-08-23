@@ -62,7 +62,12 @@ class FailureDetector {
 
     // 3. Detect Goal Drift
     if (scenario.category === 'Goal Drift' || scenario.potentialFailureMode?.toLowerCase().includes('drift')) {
-      const thoughts = traceEvents.filter(e => e.eventType === 'AGENT_THOUGHT');
+      const thoughts =
+    traceEvents.filter(
+        e =>
+            e.eventType === 'AGENT_THOUGHT' ||
+            e.eventType === 'AGENT_DECISION'
+    );
       const hasDrift = thoughts.some(t => 
         (t.description || '').toLowerCase().includes('scraper') ||
         (t.description || '').toLowerCase().includes('write python') ||
