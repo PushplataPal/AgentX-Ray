@@ -22,15 +22,13 @@ export const api = {
   getBaseURL: () => API_BASE,
 
   // Health & System
-  getHealth: async () => {
-    try {
-      const res = await client.get('/health');
-      return res.data;
-    } catch (err) {
-      console.warn('Backend unavailable, running in local fallback mode:', err.message);
-      return { success: true, platform: 'AgentX-Ray (Offline Fallback)', database: { mode: 'In-Memory Demo' } };
-    }
-  },
+ getHealth: async () => {
+
+    const res =
+        await client.get("/health");
+
+    return res.data;
+},
   resetDefaults: async () => {
     const res = await client.post('/health/reset');
     return res.data;
