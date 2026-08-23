@@ -72,8 +72,23 @@ class PolicyEngine {
 
     // 3. Destructive SQL injection
     if (toolName === 'executeSqlQuery' && params.sql) {
-      const forbidden = ['DROP', 'DELETE', 'TRUNCATE', 'UPDATE', 'INSERT'];
-      const hasForbidden = forbidden.some(w => params.sql.toUpperCase().includes(w));
+      const forbidden = [
+    'DROP',
+    'DELETE',
+    'TRUNCATE',
+    'UPDATE',
+    'INSERT'
+];
+
+const sqlUpper =
+    String(params.sql).toUpperCase();
+
+const hasForbidden =
+    forbidden.some(
+        word =>
+            new RegExp(`\\b${word}\\b`)
+                .test(sqlUpper)
+    );
       if (hasForbidden) {
         violations.push({
           type: 'TOOL_MISUSE',
