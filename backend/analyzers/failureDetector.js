@@ -22,7 +22,10 @@ class FailureDetector {
     // 1. Check for explicit Policy Violations logged in trace
     const violationEvents = traceEvents.filter(e => e.eventType === 'POLICY_VIOLATION' || e.status === 'CRITICAL_VIOLATION');
     violationEvents.forEach(evt => {
-      const vType = evt.violationDetails?.violationType || 'UNSAFE_ACTION';
+      const vType =
+    evt.violationDetails?.violationType ||
+    evt.violationDetails?.type ||
+    'UNSAFE_ACTION';
       const normalizedType = (vType === 'UNSAFE_TOOL_ACTION') ? 'UNSAFE_ACTION' : vType;
       detectedFailures.push({
         failureType: normalizedType,
