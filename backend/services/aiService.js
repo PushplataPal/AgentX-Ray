@@ -1,68 +1,266 @@
 /**
- * AI Service Abstraction Layer
- * Supports optional external LLM providers (Gemini / OpenAI) with automatic
- * zero-key DEMO MODE deterministic fallback.
+ * AgentX-Ray AI Service
+ *
+ * DEMO_MODE=true
+ * ----------------
+ * Uses deterministic sandbox behavior.
+ *
+ * DEMO_MODE=false
+ * ----------------
+ * Uses configured LLM provider.
  */
 
 class AIService {
-  constructor() {
-    this.geminiKey = process.env.GEMINI_API_KEY || null;
-    this.openaiKey = process.env.OPENAI_API_KEY || null;
-    this.isDemoMode = process.env.DEMO_MODE !== 'false';
-  }
 
-  isDemo() {
-    return this.isDemoMode || (!this.geminiKey && !this.openaiKey);
-  }
+    constructor() {
 
-  getStatus() {
-    return {
-      demoMode: this.isDemo(),
-      hasGeminiKey: Boolean(this.geminiKey),
-      hasOpenaiKey: Boolean(this.openaiKey),
-      activeProvider: this.isDemo() ? 'Deterministic Sandbox Engine (Demo Mode)' : (this.geminiKey ? 'Gemini 1.5' : 'OpenAI GPT-4o')
-    };
-  }
+        this.geminiKey =
+            process.env.GEMINI_API_KEY || null;
 
-  /**
-   * Evaluate prompt or generate response
-   */
-  async generateResponse(agent, userPrompt, context = {}) {
-    // In Demo Mode or default mode, return high-speed deterministic execution
-    if (this.isDemo()) {
-      return {
-        provider: 'DEMO_SANDBOX',
-        thought: `Evaluating prompt "${userPrompt.substring(0, 40)}..." according to agent policy.`,
-        suggestedTool: context.suggestedTool || 'getOrder',
-        isSimulation: true
-      };
+        this.openaiKey =
+            process.env.OPENAI_API_KEY || null;
+
+        this.geminiModel =
+            process.env.GEMINI_MODEL ||
+            "gemini-3.7-flash";
+
+        this.openaiModel =
+            process.env.OPENAI_MODEL ||
+            "gpt-5.6-luna";
+
+        this.isDemoMode =
+            process.env.DEMO_MODE !== "false";
     }
 
-    // Optional LLM API integration if user configures external keys
-    try {
-      if (this.geminiKey) {
-        // Standard Gemini API call if enabled
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.geminiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `System: ${agent.systemPrompt}\nUser: ${userPrompt}` }] }]
-          })
-        });
-        const data = await response.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        return { provider: 'GEMINI', text, isSimulation: false };
-      }
-    } catch (err) {
-      console.warn('External AI call failed, falling back to Demo Mode:', err.message);
+    isDemo() {
+
+        return (
+            this.isDemoMode ||
+            (!this.geminiKey && !this.openaiKey)
+        );
     }
 
-    return {
-      provider: 'DEMO_SANDBOX',
-      text: 'Simulated compliant response in sandbox mode.',
-      isSimulation: true
-    };
-  }
+    getStatus() {
+
+        return {
+
+            demoMode: this.isDemo(),
+
+            hasGeminiKey:
+                Boolean(this.geminiKey),
+
+            hasOpenaiKey:
+                Boolean(this.openaiKey),
+
+            activeProvider:
+
+                this.isDemo()
+
+                    ? "DETERMINISTIC_SANDBOX"
+
+                    : (
+                        this.geminiKey
+                            ? `Gemini (${this.geminiModel})`
+                            : `OpenAI (${this.openaiModel})`
+                    )
+        };
+    }
+
+    async generateResponse(
+        agent,
+        userPrompt,
+        context = {}
+    ) {
+
+        // -------------------------------
+        // DEMO MODE
+        // -------------------------------
+
+        if (this.isDemo()) {
+
+            return {
+
+                provider:
+                    "DEMO_SANDBOX",
+
+                thought:
+                    `Evaluating prompt "${String(
+                        userPrompt
+                    ).substring(0, 40)}..." according to agent policy.`,
+
+                suggestedTool:
+                    context.suggestedTool ||
+                    "getOrder",
+
+                isSimulation: true
+            };
+        }
+
+        try {
+
+            const systemPrompt =
+                agent?.systemPrompt ||
+                "Follow the agent policy and respond safely.";
+
+            const prompt = `
+System Policy:
+${systemPrompt}
+
+User:
+${userPrompt}
+`;
+
+            // -------------------------------
+            // GEMINI
+            // -------------------------------
+
+            if (this.geminiKey) {
+
+                const response =
+                    await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+                            this.geminiModel
+                        )}:generateContent?key=${encodeURIComponent(
+                            this.geminiKey
+                        )}`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                contents: [
+                                    {
+                                        parts: [
+                                            {
+                                                text: prompt
+                                            }
+                                        ]
+                                    }
+                                ]
+                            })
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Gemini HTTP ${response.status}`
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                const text =
+                    data
+                        ?.candidates?.[0]
+                        ?.content?.parts
+                        ?.map(
+                            part => part.text || ""
+                        )
+                        .join("") || "";
+
+                return {
+
+                    provider: "GEMINI",
+
+                    model:
+                        this.geminiModel,
+
+                    text,
+
+                    isSimulation: false
+                };
+            }
+
+            // -------------------------------
+            // OPENAI
+            // -------------------------------
+
+            if (this.openaiKey) {
+
+                const response =
+                    await fetch(
+                        "https://api.openai.com/v1/responses",
+                        {
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json",
+
+                                Authorization:
+                                    `Bearer ${this.openaiKey}`
+                            },
+
+                            body: JSON.stringify({
+
+                                model:
+                                    this.openaiModel,
+
+                                input: prompt
+                            })
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `OpenAI HTTP ${response.status}`
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                return {
+
+                    provider: "OPENAI",
+
+                    model:
+                        this.openaiModel,
+
+                    text:
+                        data?.output_text || "",
+
+                    isSimulation: false
+                };
+            }
+
+        } catch (error) {
+
+            console.error(
+                "[AI] Provider failed:",
+                error.message
+            );
+
+            console.log(
+                "[AI] Falling back to sandbox mode."
+            );
+        }
+
+        // -------------------------------
+        // FALLBACK
+        // -------------------------------
+
+        return {
+
+            provider:
+                "DEMO_SANDBOX",
+
+            text:
+                "Simulated safe response.",
+
+            isSimulation: true
+        };
+    }
 }
 
-module.exports = new AIService();
+module.exports =
+    new AIService();
